@@ -1,6 +1,7 @@
 import gc
 import os
 import uuid
+import time
 
 import torch
 from diffusers import FluxTransformer2DModel, FluxPipeline
@@ -9,6 +10,10 @@ from transformers import T5EncoderModel, QuantoConfig
 
 bfl_repo = "black-forest-labs/FLUX.1-dev"
 dtype = torch.float16
+
+# =================================================================================
+print("Starting up...")
+start_time = time.time()
 
 # fixme: loading quantized models doesn't work yet
 def quantize_and_save(model, model_name):
@@ -52,6 +57,8 @@ pipe.text_encoder_2 = text_encoder_2
 
 pipe.enable_model_cpu_offload()
 
+print(f"Startup time: {time.time() - start_time} seconds")
+
 
 def cleanup():
     torch.cuda.empty_cache()
@@ -60,6 +67,8 @@ def cleanup():
 
 def generate_images(prompt: str, width: int = 1024, height: int = 1024, num_inference_steps: int = 30,
                     num_varaitions: int = 1):
+    print("Generating images...")
+    current_time = time.time()
     device = "cpu"
     if torch.cuda.is_available():
         device = "cuda"
@@ -82,6 +91,7 @@ def generate_images(prompt: str, width: int = 1024, height: int = 1024, num_infe
     for image_index, image in enumerate(images):
         image.save(f"{rd_uuid}/flux-dev-{image_index}.png")
 
+    print(f"Generated {len(images)} images in {time.time() - current_time} seconds")
     cleanup()
 
 

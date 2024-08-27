@@ -45,6 +45,9 @@ def cleanup():
 
 def generate_images(prompt: str, width: int = 1024, height: int = 1024, num_inference_steps: int = 30,
                     num_varaitions: int = 2):
+    print("Generating images...")
+    current_time = time.time()
+
     device = "cpu"
     if torch.cuda.is_available():
         device = "cuda"
@@ -62,11 +65,18 @@ def generate_images(prompt: str, width: int = 1024, height: int = 1024, num_infe
         generator=torch.Generator(device=device).manual_seed(0)
     ).images
 
-    # image path should be "<uuid>/flux-dev-<image_index>.png"
+    # Erstelle das Verzeichnis, bevor Bilder gespeichert werden
     rd_uuid = uuid.uuid4()
-    for image_index, image in enumerate(images):
-        image.save(f"images/{rd_uuid}/flux-dev-{image_index}.png")
+    directory = f"images/{rd_uuid}"
+    os.makedirs(directory, exist_ok=True)
 
+    for image_index, image in enumerate(images):
+        try:
+            image.save(f"{directory}/flux-dev-{image_index}.png")
+        except Exception as e:
+            print(f"Fehler beim Speichern von Bild {image_index}: {e}")
+
+    print(f"Generated {len(images)} images in {time.time() - current_time} seconds")
     cleanup()
 
 
