@@ -1,0 +1,10 @@
+diffusers~=0.30.1
+transformers~=4.44.2
+optimum-quanto
+numpy<2
+sentencepiece
+protobuf
+safetensors
+accelerate>=0.17.0
+
+torch~=2.4.0+cu124
