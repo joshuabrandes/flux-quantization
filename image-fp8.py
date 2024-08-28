@@ -1,12 +1,12 @@
 import gc
 import os
-import uuid
 import time
+import uuid
 
 import torch
 from diffusers import FluxTransformer2DModel, FluxPipeline
 from optimum.quanto import freeze, qfloat8, quantize
-from transformers import T5EncoderModel, QuantoConfig
+from transformers import T5EncoderModel
 
 bfl_repo = "black-forest-labs/FLUX.1-dev"
 dtype = torch.float16
@@ -30,6 +30,15 @@ pipe = FluxPipeline.from_pretrained(bfl_repo, transformer=None, text_encoder_2=N
 pipe.transformer = transformer
 pipe.text_encoder_2 = text_encoder_2
 
+device = "cpu"
+if torch.cuda.is_available():
+    device = "cuda"
+elif torch.backends.mps.is_available():
+    device = "mps"
+
+print(f"Using device: {device}")
+
+pipe.to(device)
 if torch.cuda.is_available():
     pipe.enable_model_cpu_offload()
 
@@ -54,14 +63,7 @@ def generate_images(prompt: str, width: int = 1024, height: int = 1024, num_infe
                     num_varaitions: int = 2):
     current_time = time.time()
 
-    device = "cpu"
-    if torch.cuda.is_available():
-        device = "cuda"
-    elif torch.backends.mps.is_available():
-        device = "mps"
 
-    print(f"Using device: {device}")
-    pipe.to(device)
 
     print("Generating images...")
 
