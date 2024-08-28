@@ -30,7 +30,8 @@ pipe = FluxPipeline.from_pretrained(bfl_repo, transformer=None, text_encoder_2=N
 pipe.transformer = transformer
 pipe.text_encoder_2 = text_encoder_2
 
-pipe.enable_model_cpu_offload()
+if torch.cuda.is_available():
+    pipe.enable_model_cpu_offload()
 
 print(f"Startup time: {time.time() - start_time} seconds")
 
@@ -39,13 +40,18 @@ print(f"Startup time: {time.time() - start_time} seconds")
 
 
 def cleanup():
-    torch.cuda.empty_cache()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
+        print("Cleared CUDA cache")
+    elif torch.backends.mps.is_available():
+        torch.mps.empty_cache()
+        print("Cleared MPS cache")
     gc.collect()
 
 
 def generate_images(prompt: str, width: int = 1024, height: int = 1024, num_inference_steps: int = 30,
                     num_varaitions: int = 2):
-    print("Generating images...")
     current_time = time.time()
 
     device = "cpu"
@@ -53,6 +59,11 @@ def generate_images(prompt: str, width: int = 1024, height: int = 1024, num_infe
         device = "cuda"
     elif torch.backends.mps.is_available():
         device = "mps"
+
+    print(f"Using device: {device}")
+    pipe.to(device)
+
+    print("Generating images...")
 
     images = pipe(
         prompt,
@@ -62,7 +73,6 @@ def generate_images(prompt: str, width: int = 1024, height: int = 1024, num_infe
         num_images_per_prompt=num_varaitions,
         guidance_scale=3.5,
         output_type="pil",
-        generator=torch.Generator(device=device).manual_seed(0)
     ).images
 
     # Erstelle das Verzeichnis, bevor Bilder gespeichert werden

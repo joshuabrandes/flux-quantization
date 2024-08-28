@@ -8,3 +8,5 @@ safetensors
 accelerate>=0.17.0
 
 torch~=2.4.0+cu124
+# use the following line if you are not using a NVIDIA GPU
+# torch~=2.4.0
